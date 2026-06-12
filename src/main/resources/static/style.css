@@ -1,0 +1,33 @@
+#nav{
+	display :flex;
+	justify-content :flex-end;
+	align-items:flex-end;
+	align-content: flex-end;
+	align-self: flex-end;
+}
+button{
+	margin:10px;
+	padding: 10px;
+	border-radius: 5px;
+	background-color: #4CAF50;
+	color: white;
+}
+button:hover{
+	background-color: #4f6c50;
+	border-radius: 10px;
+}
+body{
+	background-image :  url('https://www.transparenttextures.com/patterns/white-diamond.png');
+}
+table{
+	margin: 15px;
+	width: 90%;
+	color:rgb(16, 10, 1);
+}
+header{
+	padding:10px;
+	background-color: #333333;
+	color: white;
+	border-radius: 10px;
+	
+}
