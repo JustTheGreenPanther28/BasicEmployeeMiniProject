@@ -35,7 +35,6 @@ async function init() {
         tb.insertAdjacentHTML("beforeend", newRow);
     }
 
-    // attach listeners after all rows are inserted
     document.querySelectorAll(".reportToBtn").forEach(btn => {
         btn.addEventListener("click", async () => {
             let id = btn.dataset.id;
