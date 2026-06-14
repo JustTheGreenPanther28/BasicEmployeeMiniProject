@@ -28,6 +28,10 @@ public class EmployeeServiceImpl implements EmployeeService {
 	@Override
 	public Page<EmployeeResponse> getEmployees(int page, int size) {
 
+		if (page <= -1 || size <= -1) {
+			throw new RuntimeException("Invalid page number or size");
+		}
+
 		Pageable pageable = PageRequest.of(page, size);
 
 		Page<EmployeeResponse> response = employeeRepo.findAll(pageable).map(employeeEntity -> {
@@ -40,13 +44,26 @@ public class EmployeeServiceImpl implements EmployeeService {
 			employeeResponse.setSalary(employeeEntity.getSalary());
 			return employeeResponse;
 		});
+
+		if (response == null) {
+			throw new RuntimeException("Empty!");
+		}
 		return response;
 	}
 
 	@Override
 	public List<EmployeeResponse> getEmployeesReport(UUID id) {
+
+		if (id == null) {
+			throw new RuntimeException("Id is Invalid!");
+		}
+
 		List<EmployeeResponse> employeeResponses = new ArrayList<>();
 		Employee current = employeeRepo.findByEmployeeId(id);
+
+		if (current == null) {
+			throw new RuntimeException("Employee with id " + id + " doesn't exist!");
+		}
 
 		while (current.getReportTo() != null) {
 			EmployeeResponse employeeResponse = new EmployeeResponse();
@@ -65,8 +82,11 @@ public class EmployeeServiceImpl implements EmployeeService {
 
 	@Override
 	@Transactional
-	public boolean deleteEmployee(UUID publicId) {
-		Employee employee = employeeRepo.findByEmployeeId(publicId);
+	public boolean deleteEmployee(UUID id) {
+		if (id == null) {
+			throw new RuntimeException("The id " + id + " doesn't exist");
+		}
+		Employee employee = employeeRepo.findByEmployeeId(id);
 		if (employee == null) {
 			return false;
 		}
@@ -87,10 +107,9 @@ public class EmployeeServiceImpl implements EmployeeService {
 		employee.setJoinDate(employeeAdditionRequest.joinDate());
 		employee.setPosition(employeeAdditionRequest.position());
 		employee.setSalary(employeeAdditionRequest.salary());
-		Employee reportTo = employeeRepo.findByEmployeeId(employeeAdditionRequest.reportTo());
-//		if(reportTo==null) {
-//			return false;
-//		}
+		Employee reportTo = employeeRepo.findByEmployeeId(UUID.fromString(employeeAdditionRequest.reportTo()));
+		if (reportTo == null) {
+			throw new RuntimeException("The id " + employeeAdditionRequest.reportTo() + " of employee to report doesn't exist");}
 		employee.setReportTo(reportTo);
 
 		employeeRepo.save(employee);
