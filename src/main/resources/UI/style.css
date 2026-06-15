@@ -31,3 +31,11 @@ header{
 	border-radius: 10px;
 	
 }
+.reportToBtn {
+    padding: 4px 10px;
+    cursor: pointer;
+    color: black;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}

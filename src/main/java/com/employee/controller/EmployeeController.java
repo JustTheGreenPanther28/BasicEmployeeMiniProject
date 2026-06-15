@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.employee.request.EmployeeAdditionRequest;
 import com.employee.response.EmployeeResponse;
+import com.employee.response.ReportEmployee;
 import com.employee.service.EmployeeService;
 
 @RestController
@@ -41,15 +42,15 @@ public class EmployeeController {
 	}
 
 	@GetMapping("/report/{id}")
-	public ResponseEntity<List<EmployeeResponse>> getReportOfAEmployee(@PathVariable String id) {
-		return ResponseEntity.ok(employeeService.getEmployeesReport(UUID.fromString(id)));
+	public ResponseEntity<List<ReportEmployee>> getReportOfAEmployee(@PathVariable UUID id) {
+		return ResponseEntity.ok(employeeService.getEmployeesReport(id));
 	}
 
 	@DeleteMapping("/{id}")
-	public ResponseEntity<Void> deleteEmployee(@PathVariable String id) {
-		if (employeeService.deleteEmployee(UUID.fromString(id))) {
-			return ResponseEntity.noContent().build();
-		}
-		return ResponseEntity.badRequest().build();
+	public ResponseEntity<Void> deleteEmployee(@PathVariable UUID id) {
+	    if (employeeService.deleteEmployee(id)) {
+	        return ResponseEntity.noContent().build(); // ✅ 204
+	    }
+	    return ResponseEntity.badRequest().build();
 	}
 }

@@ -7,12 +7,13 @@ import org.springframework.data.domain.Page;
 
 import com.employee.request.EmployeeAdditionRequest;
 import com.employee.response.EmployeeResponse;
+import com.employee.response.ReportEmployee;
 
 public interface EmployeeService {
 	boolean addEmployee(EmployeeAdditionRequest employeeAdditionRequest);
 	
 	Page<EmployeeResponse> getEmployees(int page,int size);
-	List<EmployeeResponse> getEmployeesReport(UUID id);
+	List<ReportEmployee> getEmployeesReport(UUID id);
 	
 	boolean deleteEmployee(UUID publicId);
 }

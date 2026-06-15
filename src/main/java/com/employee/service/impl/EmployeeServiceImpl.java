@@ -14,6 +14,7 @@ import com.employee.entity.Employee;
 import com.employee.repository.EmployeeRepository;
 import com.employee.request.EmployeeAdditionRequest;
 import com.employee.response.EmployeeResponse;
+import com.employee.response.ReportEmployee;
 import com.employee.service.EmployeeService;
 
 @Service
@@ -52,13 +53,13 @@ public class EmployeeServiceImpl implements EmployeeService {
 	}
 
 	@Override
-	public List<EmployeeResponse> getEmployeesReport(UUID id) {
-
+	public List<ReportEmployee> getEmployeesReport(UUID id) {
+		// id is id of employee - who will report to others
 		if (id == null) {
 			throw new RuntimeException("Id is Invalid!");
 		}
 
-		List<EmployeeResponse> employeeResponses = new ArrayList<>();
+		List<ReportEmployee> reportsTo = new ArrayList<>();
 		Employee current = employeeRepo.findByEmployeeId(id);
 
 		if (current == null) {
@@ -66,18 +67,16 @@ public class EmployeeServiceImpl implements EmployeeService {
 		}
 
 		while (current.getReportTo() != null) {
-			EmployeeResponse employeeResponse = new EmployeeResponse();
-			employeeResponse.setEmployeeAge(current.getEmployeeAge());
-			employeeResponse.setEmployeeId(current.getEmployeeId());
-			employeeResponse.setEmployeeName(current.getEmployeeName());
-			employeeResponse.setJoinDate(current.getJoinDate());
-			employeeResponse.setPosition(current.getPosition());
-			employeeResponse.setSalary(current.getSalary());
-			employeeResponses.add(employeeResponse);
+			ReportEmployee reportTo = new ReportEmployee();
+			
+			reportTo.setId(current.getEmployeeId().toString());
+			reportTo.setName(current.getEmployeeName());
+
+			reportsTo.add(reportTo);
 			current = current.getReportTo();
 		}
 
-		return employeeResponses;
+		return reportsTo;
 	}
 
 	@Override
@@ -101,17 +100,18 @@ public class EmployeeServiceImpl implements EmployeeService {
 	public boolean addEmployee(EmployeeAdditionRequest employeeAdditionRequest) {
 
 		Employee employee = new Employee();
-
 		employee.setEmployeeAge(employeeAdditionRequest.age());
 		employee.setEmployeeName(employeeAdditionRequest.name());
 		employee.setJoinDate(employeeAdditionRequest.joinDate());
 		employee.setPosition(employeeAdditionRequest.position());
 		employee.setSalary(employeeAdditionRequest.salary());
-		Employee reportTo = employeeRepo.findByEmployeeId(UUID.fromString(employeeAdditionRequest.reportTo()));
-		if (reportTo == null) {
-			throw new RuntimeException("The id " + employeeAdditionRequest.reportTo() + " of employee to report doesn't exist");}
-		employee.setReportTo(reportTo);
+		Employee reportTo = null;
+		System.out.println(employeeAdditionRequest.reportTo());
+		if (employeeAdditionRequest.reportTo() != null) {
+			reportTo = employeeRepo.findByEmployeeId(employeeAdditionRequest.reportTo());
 
+		}
+		employee.setReportTo(reportTo);
 		employeeRepo.save(employee);
 
 		return true;

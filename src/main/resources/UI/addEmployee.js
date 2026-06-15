@@ -1,7 +1,7 @@
 let submitBtn = document.getElementById("submit-btn");
-submitBtn.addEventListener("click",submit);
+submitBtn.addEventListener("click", submit);
 
-async function submit(){
+async function submit() {
     submitBtn.disabled = true;
     submitBtn.textContent = "Submitting...";
     submitBtn.style.backgroundColor = "darkgray";
@@ -15,10 +15,10 @@ async function submit(){
     let joinDate = document.getElementById("joinDate").value;
     let reportTo = document.getElementById("reportTo").value;
 
-    if(joinDate==undefined || joinDate==""){
+    if (joinDate == undefined || joinDate == "") {
         joinDate = new Date().toISOString();
     }
-    if(employeeAge==undefined || employeeAge=="" || isNaN(employeeAge) || employeeAge<=17){
+    if (employeeAge == undefined || employeeAge == "" || isNaN(employeeAge) || employeeAge < 18 || employeeAge >= 100) {
         alert("Please enter a valid age (must be 18 or older).");
         submitBtn.disabled = false;
         return;
@@ -28,22 +28,30 @@ async function submit(){
         age: parseInt(employeeAge),
         position: position,
         salary: parseFloat(salary),
-        joinDate: joinDate
+        joinDate: joinDate,
+        reportTo: reportTo
     }
 
-    const response = await fetch("http://localhost:8080/employee", 
+    const response = await fetch("http://localhost:8080/employee",
         {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-    });
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
 
     if (response.ok) {
         submitBtn.disabled = false;
         alert("Employee added!");
     } else {
-        alert("Failed: " + response.status);
+        const error = await response.json();
+        alert("Failed: " + error.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Submit";
+        submitBtn.style.backgroundColor = "";
+        submitBtn.style.color = "";
+        submitBtn.style.cursor = "";
+        submitBtn.style.opacity = "";
     }
 }
