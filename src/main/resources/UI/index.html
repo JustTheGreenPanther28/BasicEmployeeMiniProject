@@ -5,34 +5,80 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Document</title>
-	<link rel="stylesheet" href="style.css"> 
+	<link rel="stylesheet" href="style.css">
 	<script src="app.js" defer></script>
 </head>
 
 <body>
 	<header>
 		<div id="nav">
-			<button id="add">Add</button>
-			<button id="delete">Delete</button>
+			<div id="logo">
+			</div>
+			<button id="add-btn">+ Add Employee</button>
+			<button id="delete-btn">🗑️ Delete</button>
 		</div>
 	</header>
 	<main>
-		<table>
-			<thead>
-				<tr>
-					<th>Check box</th>
-					<th>Employee ID</th>
-					<th>Employee Name</th>
-					<th>Employee Age</th>
-					<th>Position</th>
-					<th>Salary</th>
-					<th>Join Date</th>
-					<th>Report To</th>
-				</tr>
-			</thead>
-			<tbody id="table-body"></tbody>
-		</table>
-	</main>
+		<div class="table-wrap">
+			<table>
+				<thead>
+					<tr>
+						<th><input type="checkbox" id="all"></th>
+						<th>Employee Name</th>
+						<th>Employee Age</th>
+						<th>Position</th>
+						<th>Salary</th>
+						<th>Join Date</th>
+						<th>Report To</th>
+					</tr>
+				</thead>
+				<tbody id="table-body"></tbody>
+			</table>
+		</div>
+		<div id="pagination">
+			<Button id="prev-page">Previous</Button>
+			<div id="curr-page"></div>
+			<Button id="next-page">Next</Button>
+		</div>
+		<div id="alert">
+			<span id="alert-message"></span>
+		</div>
+		<div id="add-form">
+			<button id="cross">✖</button>
+			<form>
+				<div class="full">
+					<label for="employeeName">Name</label>
+					<input type="text" class="input-form" name="employeeName" placeholder="Raj Kar" required>
+				</div>
+
+				<div>
+					<label for="employeeAge" >Age</label>
+					<input type="number" class="input-form" name="employeeAge" placeholder="21">
+				</div>
+
+				<div>
+					<label for="position">Position</label>
+					<input type="text" class="input-form" name="position" placeholder="Software Developer">
+				</div>
+
+				<div>
+					<label for="salary">Salary</label>
+					<input type="number" class="input-form" name="salary" step="0.01" placeholder="10000.0">
+				</div>
+
+				<div>
+					<label for="joinDate">Join Date</label>
+					<input type="date" id="joinDate" class="input-form" name="joinDate" placeholder="09/09/2020">
+				</div>
+
+				<div class="full">
+					<label for="reportTo">Report To</label>
+					<input type="text" class="input-form" id="reportTo" name="reportTo">
+				</div>
+
+				<input type="submit" value="Add Employee" id="submit-btn" class="full">
+			</form>
+		</div>
 	</main>
 	<footer>
 

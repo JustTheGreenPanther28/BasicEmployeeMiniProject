@@ -18,6 +18,9 @@ async function submit() {
     if (joinDate == undefined || joinDate == "") {
         joinDate = new Date().toISOString();
     }
+    else{
+        joinDate = joinDate + "T00:00:00Z";
+    }
     if (employeeAge == undefined || employeeAge == "" || isNaN(employeeAge) || employeeAge < 18 || employeeAge >= 100) {
         alert("Please enter a valid age (must be 18 or older).");
         submitBtn.disabled = false;
@@ -47,11 +50,7 @@ async function submit() {
     } else {
         const error = await response.json();
         alert("Failed: " + error.message);
-        submitBtn.disabled = false;
+        submitBtn.disabled = true;
         submitBtn.textContent = "Submit";
-        submitBtn.style.backgroundColor = "";
-        submitBtn.style.color = "";
-        submitBtn.style.cursor = "";
-        submitBtn.style.opacity = "";
     }
 }
