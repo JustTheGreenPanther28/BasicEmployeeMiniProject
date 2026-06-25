@@ -17,12 +17,11 @@ import jakarta.validation.constraints.Min;
 
 @Entity
 public class Employee {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private int id;
 
-	@Column(columnDefinition = "BINARY(16)")
-	private UUID employeeId;
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
+	@Column(columnDefinition = "VARCHAR(36)", length = 36)
+	private String employeeId;
 
 	@Column(nullable = false, length = 150)
 	private String employeeName;
@@ -34,26 +33,14 @@ public class Employee {
 	@Column(length = 100)
 	private String position;
 
-	private double salary=0;
+	@Min(0)
+	private double salary = 0;
 
 	private LocalDateTime joinDate = LocalDateTime.now();
 
-	@ManyToOne(cascade = CascadeType.REMOVE)
+	@ManyToOne
 	@JoinColumn(name = "report_to_id")
 	private Employee reportTo;
-
-	@PrePersist
-	public void onCreate() {
-		this.employeeId = UUID.randomUUID();
-	}
-
-	public int getId() {
-		return id;
-	}
-
-	public void setId(int id) {
-		this.id = id;
-	}
 
 	public String getEmployeeName() {
 		return employeeName;
@@ -95,11 +82,11 @@ public class Employee {
 		this.joinDate = joinDate;
 	}
 
-	public UUID getEmployeeId() {
+	public String getEmployeeId() {
 		return employeeId;
 	}
 
-	public void setEmployeeId(UUID employeeId) {
+	public void setEmployeeId(String employeeId) {
 		this.employeeId = employeeId;
 	}
 

@@ -4,18 +4,18 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class EmployeeResponse {
-	private UUID employeeId;
+	private String employeeId;
 	private String employeeName;
 	private int employeeAge;
 	private String position;
 	private double salary;
 	private LocalDateTime joinDate;
 
-	public UUID getEmployeeId() {
+	public String getEmployeeId() {
 		return employeeId;
 	}
 
-	public void setEmployeeId(UUID employeeId) {
+	public void setEmployeeId(String employeeId) {
 		this.employeeId = employeeId;
 	}
 

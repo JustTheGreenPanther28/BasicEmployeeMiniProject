@@ -4,23 +4,21 @@ import java.util.UUID;
 
 public class ReportEmployee {
 
-	private String id;
-	private String name;
-
-	public String getId() {
-		return id;
+	private String reporter;
+	private String reportTo;
+	
+	public String getReporter() {
+		return reporter;
 	}
-
-	public void setId(String id) {
-		this.id = id;
+	public void setReporter(String reporter) {
+		this.reporter = reporter;
 	}
-
-	public String getName() {
-		return name;
+	public String getReportTo() {
+		return reportTo;
 	}
-
-	public void setName(String name) {
-		this.name = name;
+	public void setReportTo(String reportTo) {
+		this.reportTo = reportTo;
 	}
-
+	
+	
 }
