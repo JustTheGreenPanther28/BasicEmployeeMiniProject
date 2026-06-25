@@ -126,7 +126,7 @@ async function init() {
                 // }
             });
 
-            if(response.status == 200){
+            if(response.status == 204){
                 showAlert(`${btn.getAttribute('name')} Deleted!`,"#0f5132", "#d1e7dd", "#badbcc");
                 init();
             }
