@@ -7,19 +7,20 @@
 
 button {
 	padding: 5px;
-	border-radius: 4px;
+	border-radius: 10px;
+	margin: 5px;
 	font-weight: 700;
+	cursor: pointer;
 }
 
 #add-btn {
-background-color: #157347;
+	background-color: #157347;
 	color: white;
 	font-size: 0.85rem;
 	font-weight: 600;
 	padding: 8px 16px;
 	border-radius: 8px;
 	border: none;
-	cursor: pointer;
 	letter-spacing: 0.3px;
 }
 
@@ -64,14 +65,16 @@ header {
 	border-radius: 0;
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	align-content: center;
+	justify-content: space-around;
 	box-sizing: border-box;
 	z-index: 10;
 	border-radius: 50px;
 }
 
 #logo {
-	position: static;
+	position: absolute;
+	left: 40px;
 	width: 45px;
 	height: 45px;
 	border-radius: 50%;
@@ -81,16 +84,33 @@ header {
 	flex-shrink: 0;
 }
 
-.reportToBtn {
+.reportToBtn,
+.editBtn {
 	padding: 4px;
 	color: black;
 	background-color: white;
 	border: 1px solid #ccc;
 	border-radius: 12px;
+	margin: 5px;
+}
+
+.editBtn {
+	border: none;
+	border-radius: 0px;
+	padding : 0px;
+	border:none;
+	background:none;
+}
+.editBtn:hover{
+	background: none;
 }
 
 .reportToBtn:hover {
 	background-color: #ccc;
+}
+
+.individual-delete{
+	background-color: red;
 }
 
 .table-wrap {
@@ -103,7 +123,6 @@ header {
 	margin-bottom: 20px;
 	padding: 0 40px;
 	border-radius: 25px;
-	overflow: hidden;
 }
 
 table {
@@ -126,6 +145,8 @@ th {
 }
 
 th {
+	position: sticky;
+	top: 0;
 	background: #198754;
 	padding-top: 13px;
 	padding-bottom: 13px;
@@ -138,6 +159,7 @@ tr:nth-child(even) td {
 
 tr:hover td {
 	background: #4a5f7a;
+	overflow:hidden;
 }
 
 #pagination {
@@ -175,14 +197,17 @@ tr:hover td {
 	background-color: #198754;
 	color: greenyellow;
 }
-#curr-page{
+
+#curr-page {
 	font-weight: 1000;
 	font-size: large;
-	font-family:sans-serif;
-	color:whitesmoke;
+	font-family: sans-serif;
+	color: whitesmoke;
 }
-#prev-page:disabled,#next-page:disabled{
-	background-color:#177d4d;
+
+#prev-page:disabled,
+#next-page:disabled {
+	background-color: #177d4d;
 	color: greenyellow;
 	pointer-events: none;
 }
@@ -215,7 +240,7 @@ tr:hover td {
 	pointer-events: all;
 }
 
-#employee-add{
+#employee-add {
 	width: auto;
 	height: auto;
 }
@@ -241,9 +266,7 @@ tr:hover td {
 	pointer-events: all;
 }
 
-#alert-message {
-	
-}
+#alert-message {}
 
 label {
 	margin: 5px;
@@ -264,16 +287,14 @@ label {
 }
 
 #submit-btn {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	align-content: center;
-	align-self: center;
-	width:100%;
-	margin-top: 20px;
+	display: block;
+	width: 100%;
+	margin-top: 10px;
 	background-color: #57C785;
 	color: white;
+	grid-column: 1 / -1;
 }
+
 
 #submit-btn:hover {
 	background-color: darkgreen;
@@ -286,7 +307,7 @@ label {
 	font-size: larger;
 	position: relative;
 	left: 250px;
-	top:-30px;
+	top: -30px;
 	background-color: transparent;
 	border: none;
 	font-weight: 1000;
@@ -297,59 +318,60 @@ label {
 }
 
 #sort-select {
-    background-color: #1a1a2e;
-    color: white;
-    border: 1px solid #2d2d2d;
-    border-radius: 10px;
-    padding: 8px 12px;
-    font-size: 0.85rem;
-    cursor: pointer;
+	background-color: #1a1a2e;
+	color: white;
+	border: 1px solid #2d2d2d;
+	border-radius: 10px;
+	padding: 8px 12px;
+	font-size: 0.85rem;
+	cursor: pointer;
 }
 
 #sort-select:hover {
-    border-color: #198754;
+	border-color: #198754;
 }
 
 
 form {
-    background: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 12px;
-    padding: 1.5rem;
-    width: 100%;
-    max-width: 480px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+	background: #fff;
+	border: 1px solid #e0e0e0;
+	border-radius: 12px;
+	padding: 1.5rem;
+	width: 100%;
+	max-width: 480px;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1rem;
 }
 
 label {
-    display: fixed;
-    font-size: 13px;
-    color: #666;
-    margin-bottom: 4px;
+	display: fixed;
+	font-size: 13px;
+	color: #666;
+	margin-bottom: 4px;
 }
 
 input {
-    width: 100%;
-    padding: 8px 10px;
-    font-size: 14px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background: #fafafa;
-    outline: none;
-    transition: border-color 0.15s;
+	width: 100%;
+	padding: 8px 10px;
+	font-size: 14px;
+	border: 1px solid #ddd;
+	border-radius: 8px;
+	background: #fafafa;
+	outline: none;
+	transition: border-color 0.15s;
 }
+
 select {
-  width: 100%;
-  padding: 0 12px;
-  font-size: 14px;
-  box-sizing: border-box;
+	width: 100%;
+	padding: 0 12px;
+	font-size: 14px;
+	box-sizing: border-box;
 }
 
 input:focus {
-    border-color: #999;
-    background: #fff;
+	border-color: #999;
+	background: #fff;
 }
 
 label[for="employeeName"],
@@ -357,21 +379,20 @@ input#employeeName,
 label[for="reportTo"],
 input#reportTo,
 input[type="submit"] {
-    grid-column: 1 / -1;
+	grid-column: 1 / -1;
 }
 
 input[type="submit"] {
-    background: #111;
-    color: #fff;
-    border: none;
-    cursor: pointer;
-    font-weight: 500;
-    padding: 10px;
-    border-radius: 8px;
-    margin-top: 0.5rem;
+	background: #111;
+	color: #fff;
+	border: none;
+	cursor: pointer;
+	font-weight: 500;
+	padding: 10px;
+	border-radius: 8px;
+	margin-top: 0.5rem;
 }
 
 input[type="submit"]:hover {
-    opacity: 0.85;
+	opacity: 0.85;
 }
-

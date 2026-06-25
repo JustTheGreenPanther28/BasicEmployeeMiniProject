@@ -1,9 +1,12 @@
 let employees = [];
-let api = "http://localhost:8080/employee";
+const api = "http://localhost:8080/employee";
+let size = 15;
 let totalPages = 0;
 let currPage = 0;
 let sortBy = "employeeName";
-let order = "asc"
+let order = "asc";
+let submitBtn = document.getElementById("submit-btn");
+
 async function fetchEmployees(page, size, sortBy, order) {
     try {
         let response = await fetch(api + `?page=${page}&size=${size}&sortBy=${sortBy}&order=${order}`);
@@ -22,7 +25,7 @@ async function fetchEmployees(page, size, sortBy, order) {
 }
 
 async function init() {
-    let employeeValues = await fetchEmployees(currPage, 10, sortBy, order);
+    let employeeValues = await fetchEmployees(currPage, size, sortBy, order);
     let currentPage = document.getElementById("curr-page");
     if (totalPages !== 0) {
         currentPage.textContent = `Page ${currPage + 1} of ${totalPages}`;
@@ -43,7 +46,20 @@ async function init() {
             <td>${employee.position}</td>
             <td>${employee.salary}</td>
             <td>${new Date(employee.joinDate).toLocaleDateString()}</td>
-            <td><button class="reportToBtn" data-id="${employee.employeeId}">Report To</button></td>
+            <td><button class="reportToBtn" data-id="${employee.employeeId}" name="${employee.employeeName}">Report To</button></td>
+            <td><button class="editBtn" 
+            data-id = "${employee.employeeId}" 
+            name = "${employee.employeeName}"
+            age = "${employee.employeeAge}"
+            position = "${employee.position}"
+            salary = "${employee.salary}"
+            joinDate = "${employee.joinDate}">
+            <img src="img.png" width=20px height=20px>
+            </button>
+            <button class="individual-delete" data-id="${employee.employeeId}" name = "${employee.employeeName}">
+            <img src="bin.png" width=25px height=25px>
+            </button></td>
+
         </tr>`;
         tb.insertAdjacentHTML("beforeend", newRow);
     }
@@ -52,6 +68,7 @@ async function init() {
     nextPage.disabled = currPage >= totalPages - 1;
 
 
+    //add event listener to all report button
     document.querySelectorAll(".reportToBtn").forEach(btn => {
         btn.addEventListener("click", async () => {
             let id = btn.getAttribute("data-id");
@@ -62,27 +79,81 @@ async function init() {
                     showAlert("No employees found!");
                     return;
                 }
-                showAlert("Id and name of employee to report:\n" + "Id : " + (data[0].id) + " Name: " + (data[0].name), "#0f5132", "#d1e7dd", "#badbcc");
+                showAlert('"'+(data[0].reporter)+'" must report to "'+ (data[0].reportTo)+'"' , "#0f5132", "#d1e7dd", "#badbcc");
             }
             else {
                 const error = await response.json();
-                showAlert("Error occured while fetching records")
+                showAlert(btn.getAttribute('name') + " don't need to report anyone!","#0f5132", "#d1e7dd", "#badbcc");
             }
         });
     });
+
+
+    //event listener to all edit buttons
+    document.querySelectorAll(".editBtn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            let id = btn.getAttribute("data-id");
+            let editform = document.getElementById('add-form');
+            editform.children[0].textContent = "Edit Employee";
+            editform.style.display = 'flex';
+
+            //Adding new values
+            document.getElementById('employeeName').value = btn.getAttribute('name');
+            document.getElementById('employeeAge').value = btn.getAttribute('age');
+            if (btn.position != undefined || btn.position != "") {
+                document.getElementById('position').value = btn.getAttribute('position');
+            }
+            document.getElementById('salary').value = btn.getAttribute('salary');
+            document.getElementById('joinDate').value = btn.getAttribute('joinDate').split("T")[0];
+
+            // remove old listener
+            submitBtn.replaceWith(submitBtn.cloneNode(true));
+            submitBtn = document.getElementById("submit-btn");
+            submitBtn.value = "Edit Employee";
+            submitBtn.addEventListener("click", () => submit(id));
+        });
+    });
+
+    //event listener to add individual-delete buttons 
+    document.querySelectorAll('.individual-delete').forEach(btn => {
+        btn.addEventListener("click", async () => {
+            let id = btn.getAttribute('data-id');
+
+            const response = await fetch(api + `/${id}`, {
+                method: "DELETE",
+                // header: {
+                //     "Content-Type": "application/json"
+                // }
+            });
+
+            if(response.status == 200){
+                showAlert(`${btn.getAttribute('name')} Deleted!`,"#0f5132", "#d1e7dd", "#badbcc");
+                init();
+            }
+            else{
+                showAlert(`Failed to delete ${btn.getAttribute('name')}, as other people report to him!`);
+            }
+        })
+    })
 
     addEmployeeToReport(employeeValues);
 }
 
 document.getElementById("add-btn").addEventListener("click", () => {
     let addform = document.getElementById('add-form');
+    addform.children[0].textContent = "Employee Details";
     addform.style.display = 'flex';
+
+    submitBtn.replaceWith(submitBtn.cloneNode(true));
+    submitBtn = document.getElementById("submit-btn");
+    submitBtn.value = "Add Employee";
+    submitBtn.addEventListener("click", () => submit());
 });
 
 document.getElementById('cross').addEventListener("click", () => {
     let addform = document.getElementById('add-form');
     addform.style.display = 'none';
-
+    addform.children[2].reset();
 })
 
 deletebtn = document.getElementById("delete-btn");
@@ -96,19 +167,20 @@ deletebtn.addEventListener("click", async () => {
 
     let ids = Array.from(checkboxes).map(checkbox => checkbox.value);
 
-    for (let id of ids) {
-        const response = await fetch(api + `/${id}`, {
-            method: "DELETE",
-        });
-        if (response.ok) {
-            document.querySelector(`input[value="${id}"]`).closest("tr").remove();
-        } else {
-            const text = await response.text();
-            const message = text ? JSON.parse(text).message : response.statusText;
-            showAlert(`Failed to delete ${id}:`);
-            return;
-        }
+    const response = await fetch(api + '/ids', {
+        method: "DELETE",
+        body: JSON.stringify(ids),
+        headers: { "Content-Type": "application/json" }
+    });
+    if (response.ok) {
+        init();
+    } else {
+        const text = await response.text();
+        const message = text ? JSON.parse(text).message : response.statusText;
+        showAlert(`Failed to delete, as one of id is a reporter`);
+        return;
     }
+    document.getElementById("all").checked = false;
 });
 // select all check boxs
 all = document.getElementById("all");
@@ -170,7 +242,7 @@ function addEmployeeToReport(employees) {
         return;
     }
     let reportTo = document.getElementById('report-to');
-    reportTo.innerHTML=`<option value="" id="none">-- None --</option>`;
+    reportTo.innerHTML = `<option value="" id="none">-- None --</option>`;
     for (let employee of employees) {
         let newOption = new Option(`${employee.employeeName}  (${employee.numberOfEmployeesReportToEmployee})`, `${employee.employeeId}`);
         reportTo.add(newOption);
@@ -178,13 +250,12 @@ function addEmployeeToReport(employees) {
 }
 
 //Adding employees
-let submitBtn = document.getElementById("submit-btn");
-submitBtn.addEventListener("click", submit);
-
-async function submit() {
-    submitBtn.disable=true;
+async function submit(id = null) {
+    event.preventDefault();
+    // submitBtn.disable = true;
     submitBtn.style.borderColor = "black";
-    
+
+
     let employeeName = document.getElementById("employeeName").value;
     let employeeAge = document.getElementById("employeeAge").value;
     let position = document.getElementById("position").value;
@@ -198,7 +269,7 @@ async function submit() {
     else {
         joinDate = joinDate + "T00:00:00Z";
     }
-    if(!isNaN(employeeName) || employeeName=="" || employeeName.length===0 ){
+    if (!isNaN(employeeName) || employeeName == "" || employeeName.length === 0) {
         showAlert("Please enter a valid name!");
         return;
     }
@@ -207,11 +278,11 @@ async function submit() {
         return;
     }
 
-    if (salary < 0) {
+    if (salary == "" || salary == undefined || parseFloat(salary) < 0) {
         showAlert("Please enter a valid salary!");
-        submitBtn.disabled = false;
         return;
     }
+
     let payload = {
         name: employeeName,
         age: parseInt(employeeAge),
@@ -220,27 +291,50 @@ async function submit() {
         joinDate: joinDate,
         reportTo: reportTo
     }
-
-    const response = await fetch(api,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-        });
-
-    if (response.ok) {
-        showAlert("Employee added!", "#0f5132", "#d1e7dd", "#badbcc");
-        init();
-        document.getElementById('add-form').reset();
-        submitBtn.disable=false;
-        return;
-    } else {
-        const error = await response.json();
-        showAlert("Failed: " + error.message);
-        return;
-    }    
+    let response;
+    if (id == null) {
+        response = await fetch(api,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+        if (response.ok) {
+            showAlert("Employee added!", "#0f5132", "#d1e7dd", "#badbcc");
+            init();
+            document.getElementById('add-form-form').reset();
+            document.getElementById('add-form').style.display = 'none';
+            submitBtn.disable = false;
+            return;
+        } else {
+            const error = await response.json();
+            showAlert("Failed: " + error.message);
+            return;
+        }
+    }
+    else {
+        response = await fetch(api + `/${id}`,
+            {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+        if (response.ok) {
+            showAlert("Employee edited!", "#0f5132", "#d1e7dd", "#badbcc");
+            init();
+            document.getElementById('add-form-form').reset();
+            document.getElementById('add-form').style.display='none';
+            return;
+        } else {
+            const error = await response.json();
+            showAlert("Failed: " + error.message);
+            return;
+        }
+    }
 }
 
 //alert showing
@@ -263,6 +357,59 @@ function showAlert(message, color = "#842029", background = "#f8d7da", border = 
         table.style.marginTop = "20px";
         document.body.classList.remove("blocked");
     }, 5000);
+}
+
+let searchInput = document.getElementById("search-input");
+let searchTimeout;
+
+searchInput.addEventListener("input", () => {
+    clearTimeout(searchTimeout);
+    let query = searchInput.value.trim();
+
+    if (query.length === 0) {
+        currPage = 0;
+        init();
+        return;
+    }
+
+    if (query.length < 3) return;
+
+    searchTimeout = setTimeout(() => {
+        searchEmployees(query);
+    }, 300);
+});
+
+async function searchEmployees(query) {
+    try {
+        const response = await fetch(api + `/search?query=${encodeURIComponent(query)}&page=0&size=10`);
+        if (response.ok) {
+            let data = await response.json();
+            let tb = document.getElementById("table-body");
+            tb.innerHTML = "";
+            document.getElementById("curr-page").textContent = `Search results: ${data.totalElements} found`;
+            prevPage.disabled = true;
+            nextPage.disabled = true;
+
+            for (let employee of data.content) {
+                let newRow = `
+                <tr>
+                    <td><input type="checkbox" name="employeeSelect" value="${employee.employeeId}" class="child-boxes"></td>
+                    <td>${employee.employeeName}</td>
+                    <td>${employee.employeeAge}</td>
+                    <td>${employee.position}</td>
+                    <td>${employee.salary}</td>
+                    <td>${new Date(employee.joinDate).toLocaleDateString()}</td>
+                    <td><button class="reportToBtn" data-id="${employee.employeeId}">Report To</button></td>
+                    <td><button class="editBtn" data-id="${employee.employeeId}">Edit</button></td>
+                </tr>`;
+                tb.insertAdjacentHTML("beforeend", newRow);
+            }
+        } else {
+            showAlert("Search failed!");
+        }
+    } catch (error) {
+        showAlert("Error occurred while searching");
+    }
 }
 
 document.addEventListener("DOMContentLoaded", init);
