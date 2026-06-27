@@ -1,11 +1,95 @@
 let employees = [];
 const api = "http://localhost:1010/api/v1/employee";
-let size = 5;
+let size = 15;
 let totalPages = 0;
 let currPage = 0;
 let sortBy = "employeeName";
 let order = "asc";
 let submitBtn = document.getElementById("submit-btn");
+
+const names = [
+    "Rahul Sharma", "Priya Singh", "Amit Kumar", "Neha Gupta", "Raj Patel",
+    "Anjali Verma", "Vikram Mehta", "Pooja Joshi", "Arjun Nair", "Sneha Iyer",
+    "Rohan Desai", "Kavita Reddy", "Suresh Yadav", "Deepika Pillai", "Manish Tiwari",
+    "Riya Kapoor", "Karan Malhotra", "Simran Kaur", "Aditya Bhatt", "Shruti Pandey",
+    "Varun Saxena", "Nisha Jain", "Mohit Agarwal", "Divya Mishra", "Sanjay Dubey",
+    "Ananya Krishnan", "Gaurav Shukla", "Tanvi Choudhary", "Nikhil Banerjee", "Pallavi Sen",
+    "Vishal Rawat", "Meera Nambiar", "Akash Tripathi", "Ritu Srivastava", "Harsh Vardhan",
+    "Swati Kulkarni", "Pranav Doshi", "Ishaan Chatterjee", "Lavanya Menon", "Kunal Bose",
+    "Aditi Ghosh", "Yash Thakur", "Nandini Rao", "Siddharth Naik", "Kritika Bajaj",
+    "Abhinav Pandya", "Shraddha Patil", "Tarun Mathur", "Komal Shah", "Dhruv Rathore"
+];
+
+const positions = [
+    "SDE", "SDE II", "Senior SDE", "Intern", "Team Lead",
+    "Engineering Manager", "DevOps Engineer", "QA Engineer",
+    "Product Manager", "Data Analyst", "Backend Developer",
+    "Frontend Developer", "Full Stack Developer", "Cloud Architect"
+];
+
+
+function showAlert(message, success, position = "body") {
+    let alert, msg;
+
+    if (position === "form") {
+        const form = document.getElementById("add-form");
+        alert = document.getElementsByClassName("alert-form")[0];
+        msg = document.getElementsByClassName("alert-form-message")[0];
+
+        if (!success) {
+            form?.classList.add("shake");
+            if (form) form.style.borderColor = "crimson";
+            alert.style.backgroundColor = "#f8d7da";
+            alert.style.borderColor = "#f1aeb5";
+            msg.style.color = "#842029";
+        } else {
+            alert.style.backgroundColor = "#d1e7dd";
+            alert.style.borderColor = "#badbcc";
+            msg.style.color = "#176842";
+        }
+
+    } else {
+        alert = document.getElementsByClassName("alert")[0];
+        msg = document.getElementsByClassName("alert-message")[0];
+        const alertHeading = document.getElementsByClassName("alert-heading")[0];
+
+        if (!success) {
+            if (alertHeading) {
+                alertHeading.style.color = "red";
+                alertHeading.style.textDecorationColor = "rgb(149, 20, 45)";
+            }
+            document.body.classList.add("shake-body");
+        } else {
+            if (alertHeading) {
+                alertHeading.style.color = "yellowgreen";
+                alertHeading.style.textDecorationColor = "#176842";
+            }
+        }
+    }
+
+    if (!alert || !msg) {
+        console.warn("showAlert: element not found for position =", position);
+        return;
+    }
+
+    msg.textContent = message;
+    alert.style.display = "flex";
+    document.body.classList.add("blocked");
+
+    setTimeout(() => {
+        alert.style.display = "none";
+        msg.textContent = "";
+        document.body.classList.remove("blocked");
+        document.body.classList.remove("shake-body");
+
+        const form = document.getElementById("add-form");
+        if (form) {
+            form.style.borderColor = "#176842";
+            form.classList.remove("shake");
+        }
+    }, 3000);
+}
+
 
 async function fetchEmployees(page, size, sortBy, order) {
     try {
@@ -24,6 +108,155 @@ async function fetchEmployees(page, size, sortBy, order) {
     return employees;
 }
 
+// employee report to in additon of employee
+async function addEmployeeToReport() {
+
+    const response = await fetch(api + "/report", {
+        method: "GET"
+    })
+
+    if (response.ok) {
+
+        let data = await response.json();
+
+        console.log(data);
+
+        if (data == undefined || data == null || data == "") {
+            return;
+        }
+        let reportTo = document.getElementById('report-to');
+        reportTo.innerHTML = `<option value="" id="none">-- None --</option>`;
+
+        for (let countAndName of data) {
+            //option has text and value
+            let newOption = new Option(`${countAndName.employeeName}  (${countAndName.count})`, `${countAndName.employeeId}`);
+            reportTo.add(newOption);
+        }
+    }
+}
+
+async function searchEmployees(query) {
+    try {
+        const response = await fetch(api + `/search?query=${encodeURIComponent(query)}&page=0&size=10`);
+        if (response.ok) {
+            let data = await response.json();
+            let tb = document.getElementById("table-body");
+            tb.innerHTML = "";
+            document.getElementById("curr-page").textContent = `Search results: ${data.totalElements} found`;
+            prevPage.disabled = true;
+            nextPage.disabled = true;
+
+            for (let employee of data.content) {
+                let newRow = `
+                <tr>
+                    <td><input type="checkbox" name="employeeSelect" value="${employee.employeeId}" class="child-boxes"></td>
+                    <td>${employee.employeeName}</td>
+                    <td>${employee.employeeAge}</td>
+                    <td>${employee.position}</td>
+                    <td>${employee.salary}</td>
+                    <td>${new Date(employee.joinDate).toLocaleDateString()}</td>
+                    <td><button class="reportToBtn" data-id="${employee.employeeId}">Report To</button></td>
+                    <td><button class="editBtn" data-id="${employee.employeeId}">Edit</button></td>
+                </tr>`;
+                tb.insertAdjacentHTML("beforeend", newRow);
+            }
+        } else {
+            showAlert("Search failed!");
+        }
+    } catch (error) {
+        showAlert("Error occurred while searching");
+    }
+}
+
+//Adding employees
+async function submit(id = null) {
+    event.preventDefault();
+    // submitBtn.disable = true;
+    submitBtn.style.borderColor = "black";
+
+
+    let employeeName = document.getElementById("employeeName").value;
+    let employeeAge = document.getElementById("employeeAge").value;
+    let position = document.getElementById("position").value;
+    let salary = document.getElementById("salary").value;
+    let joinDate = document.getElementById("joinDate").value;
+    let reportTo = document.getElementById("report-to").value;
+
+    if (joinDate == undefined || joinDate == "") {
+        joinDate = new Date().toISOString();
+    }
+    else {
+        joinDate = joinDate + "T00:00:00Z";
+    }
+    if (!isNaN(employeeName) || employeeName == "" || employeeName.length === 0) {
+        showAlert("Please enter a valid name!", success = false, position = "form");
+        return;
+    }
+    if (employeeAge == undefined || employeeAge == "" || isNaN(employeeAge) || employeeAge < 18 || employeeAge >= 300) {
+        showAlert("Please enter a valid age (must be 18 or older).", success = false, position = "form");
+        return;
+    }
+
+    if (salary == "" || salary == undefined || parseFloat(salary) < 0) {
+        showAlert("Please enter a valid salary!", success = false, position = "form");
+        return;
+    }
+
+    let payload = {
+        name: employeeName,
+        age: parseInt(employeeAge),
+        position: position,
+        salary: parseFloat(salary),
+        joinDate: joinDate,
+        reportTo: reportTo
+    }
+    let response;
+    if (id == null) {
+        response = await fetch(api,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+        if (response.ok) {
+            showAlert("Employee added!", success = true);
+            init();
+            document.getElementById('add-form-form').reset();
+            document.getElementById('add-form').style.display = 'none';
+            submitBtn.disable = true;
+            return;
+        } else {
+            const error = await response.json();
+            showAlert("Failed: " + error.message, success = false, position = "form");
+            return;
+        }
+    }
+    else {
+        response = await fetch(api + `/${id}`,
+            {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+        if (response.ok) {
+            showAlert("Employee edited!", success = true);
+            init();
+            document.getElementById('add-form-form').reset();
+            document.getElementById('add-form').style.display = 'none';
+            return;
+        } else {
+            const error = await response.json();
+            showAlert("Failed: " + error.message, success = false, position = "form");
+            return;
+        }
+    }
+}
+
+
 async function init() {
     let employeeValues = await fetchEmployees(currPage, size, sortBy, order);
 
@@ -33,13 +266,12 @@ async function init() {
     }
     else {
         currentPage.textContent = `Page ${currPage} of ${totalPages}`;
-
     }
+
     let tb = document.getElementById("table-body");
     tb.innerHTML = "";
 
     for (let employee of employeeValues) {
-
         let newRow = `
         <tr>
             <td><input type="checkbox" name="employeeSelect" value="${employee.employeeId}" class="child-boxes"></td>
@@ -70,7 +302,6 @@ async function init() {
     prevPage.disabled = currPage === 0;
     nextPage.disabled = currPage >= totalPages - 1;
 
-
     //add event listener to all report button
     document.querySelectorAll(".reportToBtn").forEach(btn => {
         btn.addEventListener("click", async () => {
@@ -84,7 +315,6 @@ async function init() {
             }
         });
     });
-
 
     //event listener to all edit buttons
     document.querySelectorAll(".editBtn").forEach(btn => {
@@ -129,7 +359,9 @@ async function init() {
             }
         })
     })
+    addEmployeeToReport();
 }
+
 
 document.getElementById("add-btn").addEventListener("click", () => {
     let addform = document.getElementById('add-form');
@@ -149,6 +381,7 @@ document.getElementById('cross').addEventListener("click", () => {
     addform.children[3].reset();
 });
 
+//Bulk delete
 deletebtn = document.getElementById("delete-btn");
 deletebtn.disable = true;
 deletebtn.addEventListener("click", async () => {
@@ -160,7 +393,7 @@ deletebtn.addEventListener("click", async () => {
 
     let ids = Array.from(checkboxes).map(checkbox => checkbox.value);
 
-    const response = await fetch(api + '/ids', {
+    const response = await fetch(api + `/search-delete/ids?page=${currPage}&size=${size}&sortBy=${sortBy}&order=${order}`, {
         method: "DELETE",
         body: JSON.stringify(ids),
         headers: { "Content-Type": "application/json" }
@@ -174,15 +407,16 @@ deletebtn.addEventListener("click", async () => {
             showAlert(`Failed to delete, as one of id is a reporter`, success = false);
             return;
         }
-        else{
+        else {
             let takenInput = document.getElementById('take-input');
-            takenInput.style.display='flex';
+            // takenInput.style.display = 'flex';
         }
-
     }
     document.getElementById("all").checked = false;
 });
-// select all check boxs
+
+
+//Select all
 all = document.getElementById("all");
 all.addEventListener("click", () => {
     let childboxes = document.querySelectorAll(".child-boxes")
@@ -200,10 +434,10 @@ all.addEventListener("click", () => {
             }
         )
     }
-
 });
 
-//Pagination
+
+// Pagination
 let prevPage = document.getElementById('prev-page');
 prevPage.addEventListener("click", () => {
     if (currPage == 0) {
@@ -213,8 +447,8 @@ prevPage.addEventListener("click", () => {
     }
     currPage--;
     init();
-
 });
+
 let nextPage = document.getElementById('next-page');
 nextPage.addEventListener("click", () => {
     if (currPage == totalPages - 1) {
@@ -226,7 +460,8 @@ nextPage.addEventListener("click", () => {
     init();
 })
 
-//sorting
+
+//Sorting normal
 let sortSelect = document.getElementById('sort-select');
 sortSelect.addEventListener("change", () => {
     currPage = 0;
@@ -236,8 +471,8 @@ sortSelect.addEventListener("change", () => {
     init();
 })
 
-//sorting through heading name
 
+// Sorting header
 const headers = ["head-name", "head-age", "head-position", "head-salary", "head-joinDate"];
 //applying event listener to all headers
 headers.forEach(id => {
@@ -252,182 +487,7 @@ headers.forEach(id => {
     });
 });
 
-
-// employee report to in additon of employee
-async function addEmployeeToReport() {
-
-    const response = await fetch(api + "/report", {
-        method: "GET"
-    })
-
-    if (response.ok) {
-
-        let data = await response.json();
-
-        console.log(data);
-
-        if (data == undefined || data == null || data == "") {
-            return;
-        }
-        let reportTo = document.getElementById('report-to');
-        reportTo.innerHTML = `<option value="" id="none">-- None --</option>`;
-
-        for (let countAndName of data) {
-            //option has text and value
-            let newOption = new Option(`${countAndName.employeeName}  (${countAndName.count})`, `${countAndName.employeeId}`);
-            reportTo.add(newOption);
-        }
-    }
-}
-
-//Adding employees
-async function submit(id = null) {
-    event.preventDefault();
-    // submitBtn.disable = true;
-    submitBtn.style.borderColor = "black";
-
-
-    let employeeName = document.getElementById("employeeName").value;
-    let employeeAge = document.getElementById("employeeAge").value;
-    let position = document.getElementById("position").value;
-    let salary = document.getElementById("salary").value;
-    let joinDate = document.getElementById("joinDate").value;
-    let reportTo = document.getElementById("report-to").value;
-
-    if (joinDate == undefined || joinDate == "") {
-        joinDate = new Date().toISOString();
-    }
-    else {
-        joinDate = joinDate + "T00:00:00Z";
-    }
-    if (!isNaN(employeeName) || employeeName == "" || employeeName.length === 0) {
-        showAlert("Please enter a valid name!", success = false);
-        return;
-    }
-    if (employeeAge == undefined || employeeAge == "" || isNaN(employeeAge) || employeeAge < 18 || employeeAge >= 100) {
-        showAlert("Please enter a valid age (must be 18 or older).", success = false);
-        return;
-    }
-
-    if (salary == "" || salary == undefined || parseFloat(salary) < 0) {
-        showAlert("Please enter a valid salary!", success = false);
-        return;
-    }
-
-    let payload = {
-        name: employeeName,
-        age: parseInt(employeeAge),
-        position: position,
-        salary: parseFloat(salary),
-        joinDate: joinDate,
-        reportTo: reportTo
-    }
-    let response;
-    if (id == null) {
-        response = await fetch(api,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(payload)
-            });
-        if (response.ok) {
-            showAlert("Employee added!", success = true);
-            addEmployeeToReport();
-            init();
-            document.getElementById('add-form-form').reset();
-            document.getElementById('add-form').style.display = 'none';
-            submitBtn.disable = true;
-            return;
-        } else {
-            const error = await response.json();
-            showAlert("Failed: " + error.message, success = false);
-            return;
-        }
-    }
-    else {
-        response = await fetch(api + `/${id}`,
-            {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(payload)
-            });
-        if (response.ok) {
-            showAlert("Employee edited!", success = true);
-            init();
-            document.getElementById('add-form-form').reset();
-            document.getElementById('add-form').style.display = 'none';
-            return;
-        } else {
-            const error = await response.json();
-            showAlert("Failed: " + error.message, success = false);
-            return;
-        }
-    }
-}
-
-// random values 
-const names = [
-    "Rahul Sharma", "Priya Singh", "Amit Kumar", "Neha Gupta", "Raj Patel",
-    "Anjali Verma", "Vikram Mehta", "Pooja Joshi", "Arjun Nair", "Sneha Iyer",
-    "Rohan Desai", "Kavita Reddy", "Suresh Yadav", "Deepika Pillai", "Manish Tiwari",
-    "Riya Kapoor", "Karan Malhotra", "Simran Kaur", "Aditya Bhatt", "Shruti Pandey",
-    "Varun Saxena", "Nisha Jain", "Mohit Agarwal", "Divya Mishra", "Sanjay Dubey",
-    "Ananya Krishnan", "Gaurav Shukla", "Tanvi Choudhary", "Nikhil Banerjee", "Pallavi Sen",
-    "Vishal Rawat", "Meera Nambiar", "Akash Tripathi", "Ritu Srivastava", "Harsh Vardhan",
-    "Swati Kulkarni", "Pranav Doshi", "Ishaan Chatterjee", "Lavanya Menon", "Kunal Bose",
-    "Aditi Ghosh", "Yash Thakur", "Nandini Rao", "Siddharth Naik", "Kritika Bajaj",
-    "Abhinav Pandya", "Shraddha Patil", "Tarun Mathur", "Komal Shah", "Dhruv Rathore"
-];
-
-const positions = [
-    "SDE", "SDE II", "Senior SDE", "Intern", "Team Lead",
-    "Engineering Manager", "DevOps Engineer", "QA Engineer",
-    "Product Manager", "Data Analyst", "Backend Developer",
-    "Frontend Developer", "Full Stack Developer", "Cloud Architect"
-];
-
-document.getElementById('random-btn').addEventListener("click",()=>{
-    document.getElementById("employeeName").value = names[Math.floor(Math.random()*(names.length-1))];
-    document.getElementById("employeeAge").value = Math.floor(Math.random() * (85 - 18) + 18);
-    document.getElementById("position").value = positions[Math.floor(Math.random()*(positions.length-1))] ;
-    document.getElementById("salary").value = Math.floor((Math.random()*(100000-1000) + 1000)) + Math.ceil(Math.random()*100)*0.01;
-    document.getElementById("joinDate").value = new Date(Math.random() * Date.now()).toISOString().split("T")[0];
-})
-
-function showAlert(message, success, input = false) {
-    let color, background, border;
-    if (!success) {
-        color = "#842029"; background = "#f8d7da"; border = "#f1aeb5";
-        document.body.classList.add("shake");
-    }
-    else {
-        color = "#0f5132"; background = "#d1e7dd"; border = "#badbcc";
-    }
-    alert = document.getElementById("alert");
-    msg = document.getElementById("alert-message");
-    alert.style.backgroundColor = background;
-    alert.style.borderColor = border;
-    alert.style.display = "flex";
-    msg.style.color = color;
-    document.body.classList.add("blocked");
-    msg.textContent = "";
-    msg.append(" " + message);
-    if (input) {
-
-    }
-
-    setTimeout(() => {
-        alert.style.display = "none";
-        msg.textContent = "";
-        document.body.classList.remove("blocked");
-        document.body.classList.remove("shake");
-    }, 3000);
-}
-
+//Searching
 let searchInput = document.getElementById("search-input");
 let searchTimeout;
 
@@ -448,41 +508,17 @@ searchInput.addEventListener("input", () => {
     }, 300);
 });
 
-async function searchEmployees(query) {
-    try {
-        const response = await fetch(api + `/search?query=${encodeURIComponent(query)}&page=0&size=10`);
-        if (response.ok) {
-            let data = await response.json();
-            let tb = document.getElementById("table-body");
-            tb.innerHTML = "";
-            document.getElementById("curr-page").textContent = `Search results: ${data.totalElements} found`;
-            prevPage.disabled = true;
-            nextPage.disabled = true;
 
-            for (let employee of data.content) {
-                let newRow = `
-                <tr>
-                    <td><input type="checkbox" name="employeeSelect" value="${employee.employeeId}" class="child-boxes"></td>
-                    <td>${employee.employeeName}</td>
-                    <td>${employee.employeeAge}</td>
-                    <td>${employee.position}</td>
-                    <td>${employee.salary}</td>
-                    <td>${new Date(employee.joinDate).toLocaleDateString()}</td>
-                    <td><button class="reportToBtn" data-id="${employee.employeeId}">Report To</button></td>
-                    <td><button class="editBtn" data-id="${employee.employeeId}">Edit</button></td>
-                </tr>`;
-                tb.insertAdjacentHTML("beforeend", newRow);
-            }
-        } else {
-            showAlert("Search failed!");
-        }
-    } catch (error) {
-        showAlert("Error occurred while searching");
-    }
-}
+//random fulling
+document.getElementById('random-btn').addEventListener("click", () => {
+    document.getElementById("employeeName").value = names[Math.floor(Math.random() * (names.length - 1))];
+    document.getElementById("employeeAge").value = Math.floor(Math.random() * (85 - 18) + 18);
+    document.getElementById("position").value = positions[Math.floor(Math.random() * (positions.length - 1))];
+    document.getElementById("salary").value = Math.floor((Math.random() * (100000 - 1000) + 1000)) + Math.ceil(Math.random() * 100) * 0.01;
+    document.getElementById("joinDate").value = new Date(Math.random() * Date.now()).toISOString().split("T")[0];
+})
 
 document.addEventListener("DOMContentLoaded", init);
 document.addEventListener("DOMContentLoaded", addEmployeeToReport);
-
 // when the DOM is ready, call init
 // DOMContentLoaded => when HTML is parsed and DOM is built (doesn't wait for images/CSS)
