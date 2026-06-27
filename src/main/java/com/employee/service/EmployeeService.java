@@ -5,23 +5,23 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 
+import com.employee.dto.EmployeeProjectionInterface;
 import com.employee.exception.EmployeeNotFoundException;
 import com.employee.request.EmployeeAdditionRequest;
 import com.employee.response.EmployeeResponse;
-import com.employee.response.ReportEmployee;
 
 public interface EmployeeService {
 	EmployeeResponse addEmployee(EmployeeAdditionRequest employeeAdditionRequest) throws EmployeeNotFoundException;
 
 	Page<EmployeeResponse> getEmployees(int page, int size, String sortBy, String order);
+	List<EmployeeProjectionInterface> getReports() throws EmployeeNotFoundException;
 
-	List<ReportEmployee> getEmployeesReport(UUID id) throws EmployeeNotFoundException;
-
-	void deleteEmployee(UUID publicId) throws EmployeeNotFoundException;
 	
 	EmployeeResponse updateEmployee(UUID id , EmployeeAdditionRequest employeeChangeRequest) throws EmployeeNotFoundException;
 	
 	Page<EmployeeResponse> searchEmployees(String query, int page, int size);
-
-	boolean deleteEmployees(List<String> publicIds);
+	
+	void deleteEmployee(UUID publicId) throws EmployeeNotFoundException;
+	void deleteEmployees(List<String> publicIds);
+	void searchDelete(List<String> publicIds,int page,int size);
 }

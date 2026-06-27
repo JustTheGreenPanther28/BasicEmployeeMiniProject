@@ -1,18 +1,34 @@
 package com.employee.repository;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import com.employee.dto.EmployeeProjectionInterface;
 import com.employee.entity.Employee;
 
 @Repository
 public interface EmployeeRepository extends JpaRepository<Employee, String> {
 
-
 //	@Query("SELECT e FROM Employee e WHERE " + "LOWER(e.employeeName) LIKE LOWER(CONCAT('%', :query, '%')) OR "
 //			+ "LOWER(e.position) LIKE LOWER(CONCAT('%', :query, '%'))") <--- USING QUERY
-	Page<Employee> findByEmployeeNameContainingIgnoreCaseOrPositionContainingIgnoreCase(
-		    String employeeName, String position, Pageable pageable);
+	Page<Employee> findByEmployeeNameContainingIgnoreCaseOrPositionContainingIgnoreCase(String employeeName,
+			String position, Pageable pageable);
+
+	long countByReportTo(Employee reportTo);
+
+	@Query(value = "SELECT e.employee_id, e.employee_name, COUNT(r.employee_id) as count " + "FROM employee e "
+			+ "LEFT JOIN employee r ON r.report_to_id = e.employee_id "
+			+ "GROUP BY e.employee_id, e.employee_name", nativeQuery = true)
+	List<EmployeeProjectionInterface> getCountAndEmployees();
+
+	@Query(value = "SELECT employee_id FROM employee WHERE employee_id NOT IN "
+			+ "(SELECT e.employee_id FROM employee e " + "INNER JOIN employee r ON r.report_to_id = e.employee_id "
+			+ "GROUP BY e.employee_id, e.employee_name)", nativeQuery = true)
+	List<String> findEmployeesWithNoReporters(Pageable pageable);
+
 }

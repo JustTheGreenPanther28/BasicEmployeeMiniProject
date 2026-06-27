@@ -1,6 +1,5 @@
 package com.employee.service.impl;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -11,12 +10,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.employee.dto.EmployeeProjectionInterface;
 import com.employee.entity.Employee;
 import com.employee.exception.EmployeeNotFoundException;
 import com.employee.repository.EmployeeRepository;
 import com.employee.request.EmployeeAdditionRequest;
 import com.employee.response.EmployeeResponse;
-import com.employee.response.ReportEmployee;
 import com.employee.service.EmployeeService;
 
 @Service
@@ -36,14 +35,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 		Pageable pageable = PageRequest.of(page, size, sort);
 
 		Page<EmployeeResponse> response = employeeRepo.findAll(pageable).map(employeeEntity -> {
-			EmployeeResponse employeeResponse = new EmployeeResponse();
-			employeeResponse.setEmployeeAge(employeeEntity.getEmployeeAge());
-			employeeResponse.setEmployeeId(employeeEntity.getEmployeeId().toString());
-			employeeResponse.setEmployeeName(employeeEntity.getEmployeeName());
-			employeeResponse.setJoinDate(employeeEntity.getJoinDate());
-			employeeResponse.setPosition(employeeEntity.getPosition());
-			employeeResponse.setSalary(employeeEntity.getSalary());
-
+			EmployeeResponse employeeResponse = new EmployeeResponse(employeeEntity);
 			return employeeResponse;
 		});
 
@@ -54,33 +46,19 @@ public class EmployeeServiceImpl implements EmployeeService {
 	}
 
 	@Override
-	public List<ReportEmployee> getEmployeesReport(UUID id) throws EmployeeNotFoundException {
+	public List<EmployeeProjectionInterface> getReports() {
 		// id is id of employee - who will report to others
-
-		List<ReportEmployee> reportsTo = new ArrayList<>();
-		Employee current = employeeRepo.findById(id.toString())
-				.orElseThrow(() -> new EmployeeNotFoundException("Employee with doesn't exist!"));
-		if(current.getReportTo()==null) {
-			throw new EmployeeNotFoundException("No employee to report");
-		}
-		ReportEmployee reportEmp = new ReportEmployee();
-		reportEmp.setReporter(current.getEmployeeName());
-		reportEmp.setReportTo(current.getReportTo().getEmployeeName());
-
-		reportsTo.add(reportEmp);
-
-		return reportsTo;
+		return employeeRepo.getCountAndEmployees();
 	}
 
 	@Override
-	@Transactional
-	public void deleteEmployee(UUID id) throws EmployeeNotFoundException {
-
-		Employee employee = employeeRepo.findById(id.toString())
-				.orElseThrow(() -> new EmployeeNotFoundException("Employee with id doesn't exist"));
-
-		employeeRepo.delete(employee);
-
+	public Page<EmployeeResponse> searchEmployees(String query, int page, int size) {
+		Pageable pageable = PageRequest.of(page, size);
+		return employeeRepo.findByEmployeeNameContainingIgnoreCaseOrPositionContainingIgnoreCase(query, query, pageable)
+				.map(employeeEntity -> {
+					EmployeeResponse response = new EmployeeResponse(employeeEntity);
+					return response;
+				});
 	}
 
 	@Override
@@ -102,29 +80,17 @@ public class EmployeeServiceImpl implements EmployeeService {
 		employee.setReportTo(reportTo);
 		Employee savedEmployee = employeeRepo.save(employee);
 
-		EmployeeResponse employeeResponse = new EmployeeResponse();
-		employeeResponse.setEmployeeAge(savedEmployee.getEmployeeAge());
-		employeeResponse.setEmployeeName(savedEmployee.getEmployeeName());
-		employeeResponse.setJoinDate(savedEmployee.getJoinDate());
-		employeeResponse.setPosition(savedEmployee.getPosition());
-		employeeResponse.setSalary(savedEmployee.getSalary());
+		EmployeeResponse employeeResponse = new EmployeeResponse(savedEmployee);
 
 		return employeeResponse;
 
 	}
 
 	@Override
-	public boolean deleteEmployees(List<String> publicIds) {
-
-		employeeRepo.deleteAllByIdInBatch(publicIds);
-
-		return true;
-	}
-
-	@Override
 	@Transactional
 	public EmployeeResponse updateEmployee(UUID id, EmployeeAdditionRequest employeeChangeRequest)
 			throws EmployeeNotFoundException {
+
 		Employee employee = employeeRepo.findById(id.toString())
 				.orElseThrow(() -> new EmployeeNotFoundException("The employee doesn't exist!"));
 
@@ -133,8 +99,6 @@ public class EmployeeServiceImpl implements EmployeeService {
 					.orElseThrow(() -> new EmployeeNotFoundException("The employee to report doesn't exist!"));
 
 			employee.setReportTo(employeeToReport);
-
-			employeeRepo.save(employee);
 		}
 
 		employee.setEmployeeName(employeeChangeRequest.name());
@@ -156,29 +120,40 @@ public class EmployeeServiceImpl implements EmployeeService {
 		}
 
 		Employee savedEmp = employeeRepo.save(employee);
-		EmployeeResponse employeeResponse = new EmployeeResponse();
-		employeeResponse.setEmployeeAge(savedEmp.getEmployeeAge());
-		employeeResponse.setEmployeeName(savedEmp.getEmployeeName());
-		employeeResponse.setJoinDate(savedEmp.getJoinDate());
-		employeeResponse.setPosition(savedEmp.getPosition());
-		employeeResponse.setSalary(savedEmp.getSalary());
+
+		EmployeeResponse employeeResponse = new EmployeeResponse(savedEmp);
 
 		return employeeResponse;
 	}
 
-	public Page<EmployeeResponse> searchEmployees(String query, int page, int size) {
+	@Override
+	@Transactional
+	public void deleteEmployees(List<String> publicIds) {
+
+		employeeRepo.deleteAllByIdInBatch(publicIds);
+	}
+
+	@Override
+	@Transactional
+	public void deleteEmployee(UUID id) throws EmployeeNotFoundException {
+
+		Employee employee = employeeRepo.findById(id.toString())
+				.orElseThrow(() -> new EmployeeNotFoundException("Employee with id doesn't exist"));
+
+		employeeRepo.delete(employee);
+
+	}
+
+	@Override
+	@Transactional
+	public void searchDelete(List<String> publicIds,int page,int size) {
+		
 		Pageable pageable = PageRequest.of(page, size);
-		return employeeRepo.findByEmployeeNameContainingIgnoreCaseOrPositionContainingIgnoreCase(query, query, pageable)
-				.map(e -> {
-					EmployeeResponse r = new EmployeeResponse();
-					r.setEmployeeId(e.getEmployeeId());
-					r.setEmployeeName(e.getEmployeeName());
-					r.setEmployeeAge(e.getEmployeeAge());
-					r.setPosition(e.getPosition());
-					r.setSalary(e.getSalary());
-					r.setJoinDate(e.getJoinDate());
-					return r;
-				});
+		
+		List<String> ids = employeeRepo.findEmployeesWithNoReporters(pageable);
+		
+		employeeRepo.deleteAllById(ids);
+		
 	}
 
 }

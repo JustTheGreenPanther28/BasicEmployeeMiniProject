@@ -1,7 +1,8 @@
 package com.employee.response;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
+
+import com.employee.entity.Employee;
 
 public class EmployeeResponse {
 	private String employeeId;
@@ -10,6 +11,26 @@ public class EmployeeResponse {
 	private String position;
 	private double salary;
 	private LocalDateTime joinDate;
+	private ReportEmployee reportTo;
+
+	public EmployeeResponse() {
+
+	}
+
+	public EmployeeResponse(Employee employee) {
+		this.employeeId = employee.getEmployeeId();
+		this.employeeName = employee.getEmployeeName();
+		this.employeeAge = employee.getEmployeeAge();
+		this.position = employee.getPosition();
+		this.salary = employee.getSalary();
+		this.joinDate = employee.getJoinDate();
+		if (employee.getReportTo() != null) {
+			this.reportTo = new ReportEmployee(employee.getEmployeeName(), employee.getReportTo().getEmployeeName(),
+					employee.getReportTo().getEmployeeId());
+		} else {
+			this.reportTo = new ReportEmployee(employee.getEmployeeName(), null, null);
+		}
+	}
 
 	public String getEmployeeId() {
 		return employeeId;
@@ -57,5 +78,13 @@ public class EmployeeResponse {
 
 	public void setJoinDate(LocalDateTime joinDate) {
 		this.joinDate = joinDate;
+	}
+
+	public ReportEmployee getReportTo() {
+		return reportTo;
+	}
+
+	public void setReportTo(ReportEmployee reportTo) {
+		this.reportTo = reportTo;
 	}
 }

@@ -28,7 +28,7 @@ public class SwaggerConfig {
 
         ExternalDocumentation externalDocs = new ExternalDocumentation();
         externalDocs.setDescription("Project Repository");
-        externalDocs.setUrl("");
+        externalDocs.setUrl("https://github.com/JustTheGreenPanther28/EmployeeMiniProject");
 
         OpenAPI openAPI = new OpenAPI();
         openAPI.setInfo(info);

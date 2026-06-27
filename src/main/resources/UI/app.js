@@ -135,7 +135,7 @@ document.getElementById("add-btn").addEventListener("click", () => {
     let addform = document.getElementById('add-form');
     addform.children[0].textContent = "Employee Details";
     addform.style.display = 'flex';
-
+    document.body.classList.add('blocked');
     submitBtn.replaceWith(submitBtn.cloneNode(true));
     submitBtn = document.getElementById("submit-btn");
     submitBtn.value = "Add Employee";
@@ -144,9 +144,10 @@ document.getElementById("add-btn").addEventListener("click", () => {
 
 document.getElementById('cross').addEventListener("click", () => {
     let addform = document.getElementById('add-form');
+    document.body.classList.remove('blocked');
     addform.style.display = 'none';
-    addform.children[2].reset();
-})
+    addform.children[3].reset();
+});
 
 deletebtn = document.getElementById("delete-btn");
 deletebtn.disable = true;
@@ -168,9 +169,16 @@ deletebtn.addEventListener("click", async () => {
         init();
     } else {
         const text = await response.text();
-        const message = text ? JSON.parse(text).message : response.statusText;
-        showAlert(`Failed to delete, as one of id is a reporter`, success = false);
-        return;
+        if (checkboxes.length == 1) {
+            const message = text ? JSON.parse(text).message : response.statusText;
+            showAlert(`Failed to delete, as one of id is a reporter`, success = false);
+            return;
+        }
+        else{
+            let takenInput = document.getElementById('take-input');
+            takenInput.style.display='flex';
+        }
+
     }
     document.getElementById("all").checked = false;
 });
@@ -254,18 +262,19 @@ async function addEmployeeToReport() {
 
     if (response.ok) {
 
-        let data = response.json();
+        let data = await response.json();
 
-        let countAndName = data.content;
+        console.log(data);
 
-        if (countAndName == undefined || countAndName == null || countAndName == "") {
+        if (data == undefined || data == null || data == "") {
             return;
         }
         let reportTo = document.getElementById('report-to');
         reportTo.innerHTML = `<option value="" id="none">-- None --</option>`;
-        for (let employee of employees) {
-            //   ---------------This is Text----------------    -------value---------
-            let newOption = new Option(`${employee.employeeName}  (${employee.count})`, `${employee.employeeId}`);
+
+        for (let countAndName of data) {
+            //option has text and value
+            let newOption = new Option(`${countAndName.employeeName}  (${countAndName.count})`, `${countAndName.employeeId}`);
             reportTo.add(newOption);
         }
     }
@@ -325,11 +334,11 @@ async function submit(id = null) {
             });
         if (response.ok) {
             showAlert("Employee added!", success = true);
-            addEmployeeToReport(employeeValues);
+            addEmployeeToReport();
             init();
             document.getElementById('add-form-form').reset();
             document.getElementById('add-form').style.display = 'none';
-            submitBtn.disable = false;
+            submitBtn.disable = true;
             return;
         } else {
             const error = await response.json();
@@ -358,13 +367,42 @@ async function submit(id = null) {
             return;
         }
     }
-    addEmployeeToReport(employeeValues);
 }
 
-function showAlert(message, success) {
+// random values 
+const names = [
+    "Rahul Sharma", "Priya Singh", "Amit Kumar", "Neha Gupta", "Raj Patel",
+    "Anjali Verma", "Vikram Mehta", "Pooja Joshi", "Arjun Nair", "Sneha Iyer",
+    "Rohan Desai", "Kavita Reddy", "Suresh Yadav", "Deepika Pillai", "Manish Tiwari",
+    "Riya Kapoor", "Karan Malhotra", "Simran Kaur", "Aditya Bhatt", "Shruti Pandey",
+    "Varun Saxena", "Nisha Jain", "Mohit Agarwal", "Divya Mishra", "Sanjay Dubey",
+    "Ananya Krishnan", "Gaurav Shukla", "Tanvi Choudhary", "Nikhil Banerjee", "Pallavi Sen",
+    "Vishal Rawat", "Meera Nambiar", "Akash Tripathi", "Ritu Srivastava", "Harsh Vardhan",
+    "Swati Kulkarni", "Pranav Doshi", "Ishaan Chatterjee", "Lavanya Menon", "Kunal Bose",
+    "Aditi Ghosh", "Yash Thakur", "Nandini Rao", "Siddharth Naik", "Kritika Bajaj",
+    "Abhinav Pandya", "Shraddha Patil", "Tarun Mathur", "Komal Shah", "Dhruv Rathore"
+];
+
+const positions = [
+    "SDE", "SDE II", "Senior SDE", "Intern", "Team Lead",
+    "Engineering Manager", "DevOps Engineer", "QA Engineer",
+    "Product Manager", "Data Analyst", "Backend Developer",
+    "Frontend Developer", "Full Stack Developer", "Cloud Architect"
+];
+
+document.getElementById('random-btn').addEventListener("click",()=>{
+    document.getElementById("employeeName").value = names[Math.floor(Math.random()*(names.length-1))];
+    document.getElementById("employeeAge").value = Math.floor(Math.random() * (85 - 18) + 18);
+    document.getElementById("position").value = positions[Math.floor(Math.random()*(positions.length-1))] ;
+    document.getElementById("salary").value = Math.floor((Math.random()*(100000-1000) + 1000)) + Math.ceil(Math.random()*100)*0.01;
+    document.getElementById("joinDate").value = new Date(Math.random() * Date.now()).toISOString().split("T")[0];
+})
+
+function showAlert(message, success, input = false) {
     let color, background, border;
     if (!success) {
         color = "#842029"; background = "#f8d7da"; border = "#f1aeb5";
+        document.body.classList.add("shake");
     }
     else {
         color = "#0f5132"; background = "#d1e7dd"; border = "#badbcc";
@@ -378,11 +416,15 @@ function showAlert(message, success) {
     document.body.classList.add("blocked");
     msg.textContent = "";
     msg.append(" " + message);
+    if (input) {
+
+    }
 
     setTimeout(() => {
         alert.style.display = "none";
         msg.textContent = "";
         document.body.classList.remove("blocked");
+        document.body.classList.remove("shake");
     }, 3000);
 }
 
@@ -440,5 +482,7 @@ async function searchEmployees(query) {
 }
 
 document.addEventListener("DOMContentLoaded", init);
+document.addEventListener("DOMContentLoaded", addEmployeeToReport);
+
 // when the DOM is ready, call init
 // DOMContentLoaded => when HTML is parsed and DOM is built (doesn't wait for images/CSS)

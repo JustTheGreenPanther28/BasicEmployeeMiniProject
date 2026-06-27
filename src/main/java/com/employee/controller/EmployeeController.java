@@ -29,7 +29,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 @RestController
-@RequestMapping("/employee")
+@RequestMapping("api/v1/employee")
 @CrossOrigin(origins = "*", methods = { RequestMethod.GET, RequestMethod.POST, RequestMethod.DELETE,
 		RequestMethod.PATCH })
 @Tag(name = "Employee Management", description = "APIs for managing employees — add, update, delete, search, and reporting hierarchy")
@@ -57,9 +57,9 @@ public class EmployeeController {
 	}
 
 	@Operation(summary = "Get reporting hierarchy of an employee by ID")
-	@GetMapping("/report/{id}")
-	public ResponseEntity<?> getReportOfAEmployee(@PathVariable @NotNull UUID id) {
-		return ResponseEntity.ok(employeeService.getEmployeesReport(id));
+	@GetMapping("/report")
+	public ResponseEntity<?> getReports() {
+		return ResponseEntity.ok(employeeService.getReports());
 	}
 
 	@Operation(summary = "Delete an employee by ID")
@@ -71,11 +71,16 @@ public class EmployeeController {
 
 	@Operation(summary = "Delete multiple employees by list of IDs")
 	@DeleteMapping("/ids")
-	public ResponseEntity<Void> deleteEmployees(@Valid @NotNull @RequestBody List<String> ids) {
-		if (employeeService.deleteEmployees(ids)) {
-			return ResponseEntity.status(HttpStatusCode.valueOf(204)).build();
-		}
-		return ResponseEntity.badRequest().build();
+	public ResponseEntity<?> deleteEmployees(@Valid @NotNull @RequestBody List<String> ids) {
+		employeeService.deleteEmployees(ids);
+		return ResponseEntity.status(HttpStatusCode.valueOf(204)).build();
+	}
+
+	@DeleteMapping("search-delete/ids")
+	public ResponseEntity<?> deleteDeletableIds(@Valid @NotNull @RequestBody List<String> ids,
+			@RequestParam @Min(0) int page, @RequestParam @Min(0) int size) {
+		employeeService.searchDelete(ids,page,size);
+		return ResponseEntity.status(HttpStatusCode.valueOf(204)).build();
 	}
 
 	@Operation(summary = "Update employee details by ID")
