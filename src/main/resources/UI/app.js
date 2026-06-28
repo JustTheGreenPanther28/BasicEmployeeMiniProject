@@ -1,6 +1,6 @@
 let employees = [];
 const api = "http://localhost:1010/api/v1/employee";
-let size = 15;
+let size = 5;
 let totalPages = 0;
 let currPage = 0;
 let sortBy = "employeeName";
@@ -87,7 +87,7 @@ function showAlert(message, success, position = "body") {
             form.style.borderColor = "#176842";
             form.classList.remove("shake");
         }
-    }, 3000);
+    }, 5000);
 }
 
 
@@ -188,7 +188,7 @@ async function submit(id = null) {
     else {
         joinDate = joinDate + "T00:00:00Z";
     }
-    if (!isNaN(employeeName) || employeeName == "" || employeeName.length === 0) {
+    if (!isNaN(employeeName) || employeeName == "" || employeeName.length === 0 || employee.length > 100) {
         showAlert("Please enter a valid name!", success = false, position = "form");
         return;
     }
@@ -211,48 +211,52 @@ async function submit(id = null) {
         reportTo: reportTo
     }
     let response;
-    if (id == null) {
-        response = await fetch(api,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(payload)
-            });
-        if (response.ok) {
-            showAlert("Employee added!", success = true);
-            init();
-            document.getElementById('add-form-form').reset();
-            document.getElementById('add-form').style.display = 'none';
-            submitBtn.disable = true;
-            return;
-        } else {
-            const error = await response.json();
-            showAlert("Failed: " + error.message, success = false, position = "form");
-            return;
+    try {
+        if (id == null) {
+            response = await fetch(api,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+            if (response.ok) {
+                showAlert("Employee added!", success = true);
+                init();
+                document.getElementById('add-form-form').reset();
+                document.getElementById('add-form').style.display = 'none';
+                submitBtn.disable = true;
+                return;
+            } else {
+                const error = await response.json();
+                showAlert("Failed: " + error.message, success = false, position = "form");
+                return;
+            }
         }
-    }
-    else {
-        response = await fetch(api + `/${id}`,
-            {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(payload)
-            });
-        if (response.ok) {
-            showAlert("Employee edited!", success = true);
-            init();
-            document.getElementById('add-form-form').reset();
-            document.getElementById('add-form').style.display = 'none';
-            return;
-        } else {
-            const error = await response.json();
-            showAlert("Failed: " + error.message, success = false, position = "form");
-            return;
+        else {
+            response = await fetch(api + `/${id}`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+            if (response.ok) {
+                showAlert("Employee edited!", success = true);
+                init();
+                document.getElementById('add-form-form').reset();
+                document.getElementById('add-form').style.display = 'none';
+                return;
+            } else {
+                const error = await response.json();
+                showAlert("Failed: Kindly enter valid values", success = false, position = "form");
+                return;
+            }
         }
+    } catch (error) {
+        showAlert("Failed: " + error.message, success = false);
     }
 }
 
@@ -346,16 +350,20 @@ async function init() {
         btn.addEventListener("click", async () => {
             let id = btn.getAttribute('data-id');
 
-            const response = await fetch(api + `/${id}`, {
-                method: "DELETE",
-            });
+            try {
+                const response = await fetch(api + `/${id}`, {
+                    method: "DELETE",
+                });
 
-            if (response.status == 204) {
-                showAlert(`${btn.getAttribute('name')} Deleted!`, success = true);
-                init();
-            }
-            else {
-                showAlert(`Failed to delete ${btn.getAttribute('name')}, as other people report to him!`, success = false);
+                if (response.status == 204) {
+                    showAlert(`${btn.getAttribute('name')} Deleted!`, success = true);
+                    init();
+                }
+                else {
+                    showAlert(`Failed to delete ${btn.getAttribute('name')}, as other people report to him!`, success = false);
+                }
+            } catch (error) {
+                showAlert("Failed: " + error.message,success=false);
             }
         })
     })
@@ -393,24 +401,59 @@ deletebtn.addEventListener("click", async () => {
 
     let ids = Array.from(checkboxes).map(checkbox => checkbox.value);
 
-    const response = await fetch(api + `/search-delete/ids?page=${currPage}&size=${size}&sortBy=${sortBy}&order=${order}`, {
-        method: "DELETE",
-        body: JSON.stringify(ids),
-        headers: { "Content-Type": "application/json" }
-    });
-    if (response.ok) {
-        init();
-    } else {
-        const text = await response.text();
-        if (checkboxes.length == 1) {
-            const message = text ? JSON.parse(text).message : response.statusText;
-            showAlert(`Failed to delete, as one of id is a reporter`, success = false);
-            return;
+    try {
+        const response = await fetch(api + `/ids`, {
+            method: "DELETE",
+            body: JSON.stringify(ids),
+            headers: { "Content-Type": "application/json" }
+        });
+        if (response.ok) {
+            if (checkboxes.length == 1) {
+                showAlert("Employee Successfully deleted!", success = true);
+            }
+            else {
+                showAlert("Employees Successfully deleted!", success = true);
+            }
+            init();
+        } else {
+            const text = await response.text();
+            if (checkboxes.length == 1) {
+                const message = text ? JSON.parse(text).message : response.statusText;
+                showAlert(`Failed to delete, as one of id is a reporter`, success = false);
+                return;
+            }
+            else {
+                let takenInput = document.getElementById('take-input');
+                takenInput.style.display = 'flex';
+                document.body.classList.add('blocked');
+
+                document.getElementById('yes').addEventListener("click", async () => {
+                    const response = await fetch(api + `/search-delete/ids`, {
+                        method: "DELETE",
+                        body: JSON.stringify(ids),
+                        headers: { "Content-Type": "application/json" }
+                    });
+                    if (response.ok) {
+                        showAlert("Employees who were not referenced by other employees were Removed", success = true);
+                        takenInput.style.display = 'none';
+                        document.body.classList.remove('blocked');
+                        init();
+                    }
+                    else {
+                        showAlert("Failed! Some error occured!", success = false);
+                        takenInput.style.display = 'none';
+                        document.body.classList.remove('blocked');
+                    }
+                });
+                document.getElementById("no").addEventListener("click", () => {
+                    takenInput.style.display = 'none';
+                    showAlert("Deletion canceled!", success = true);
+                })
+            }
         }
-        else {
-            let takenInput = document.getElementById('take-input');
-            // takenInput.style.display = 'flex';
-        }
+    } catch (error) {
+        showAlert("Failed: "+"All of the selected employees can't be deleted", success = false);
+
     }
     document.getElementById("all").checked = false;
 });

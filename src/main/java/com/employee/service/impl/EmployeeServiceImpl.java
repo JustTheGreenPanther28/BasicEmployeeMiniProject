@@ -47,7 +47,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
 	@Override
 	public List<EmployeeProjectionInterface> getReports() {
-		// id is id of employee - who will report to others
+		// id = id of employee - who will report to others
 		return employeeRepo.getCountAndEmployees();
 	}
 
@@ -140,20 +140,25 @@ public class EmployeeServiceImpl implements EmployeeService {
 		Employee employee = employeeRepo.findById(id.toString())
 				.orElseThrow(() -> new EmployeeNotFoundException("Employee with id doesn't exist"));
 
-		employeeRepo.delete(employee);
+		if (employee != null) {
+			employeeRepo.delete(employee);
+		}
 
 	}
 
 	@Override
 	@Transactional
-	public void searchDelete(List<String> publicIds,int page,int size) {
-		
-		Pageable pageable = PageRequest.of(page, size);
-		
-		List<String> ids = employeeRepo.findEmployeesWithNoReporters(pageable);
-		
-		employeeRepo.deleteAllById(ids);
-		
-	}
+	public void searchDelete(List<String> publicIds) {
 
+		List<String> deletableIds = employeeRepo.findEmployeesWithNoReporters();
+
+		List<String> toDelete = publicIds.stream().filter(deletableIds::contains).toList();
+
+		if (!toDelete.isEmpty()) {
+			employeeRepo.deleteByIds(toDelete);
+		}
+		else {
+			throw new EmployeeNotFoundException("None of employee are deletable");
+		}
+	}
 }

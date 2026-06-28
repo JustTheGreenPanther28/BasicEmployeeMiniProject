@@ -31,7 +31,7 @@ import jakarta.validation.constraints.NotNull;
 @RestController
 @RequestMapping("api/v1/employee")
 @CrossOrigin(origins = "*", methods = { RequestMethod.GET, RequestMethod.POST, RequestMethod.DELETE,
-		RequestMethod.PATCH })
+		RequestMethod.PATCH, RequestMethod.OPTIONS  })
 @Tag(name = "Employee Management", description = "APIs for managing employees — add, update, delete, search, and reporting hierarchy")
 public class EmployeeController {
 
@@ -77,9 +77,8 @@ public class EmployeeController {
 	}
 
 	@DeleteMapping("search-delete/ids")
-	public ResponseEntity<?> deleteDeletableIds(@Valid @NotNull @RequestBody List<String> ids,
-			@RequestParam @Min(0) int page, @RequestParam @Min(0) int size) {
-		employeeService.searchDelete(ids,page,size);
+	public ResponseEntity<?> deleteDeletableIds(@Valid @NotNull @RequestBody List<String> ids) {
+		employeeService.searchDelete(ids);
 		return ResponseEntity.status(HttpStatusCode.valueOf(204)).build();
 	}
 

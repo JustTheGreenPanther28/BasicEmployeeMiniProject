@@ -5,8 +5,11 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.employee.dto.EmployeeProjectionInterface;
 import com.employee.entity.Employee;
@@ -26,9 +29,18 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
 			+ "GROUP BY e.employee_id, e.employee_name", nativeQuery = true)
 	List<EmployeeProjectionInterface> getCountAndEmployees();
 
-	@Query(value = "SELECT employee_id FROM employee WHERE employee_id NOT IN "
-			+ "(SELECT e.employee_id FROM employee e " + "INNER JOIN employee r ON r.report_to_id = e.employee_id "
-			+ "GROUP BY e.employee_id, e.employee_name)", nativeQuery = true)
-	List<String> findEmployeesWithNoReporters(Pageable pageable);
+	//this basically means , the inner select query has the ids of employees who are being reported by others
+	//the outer query has NOT IN which reverse the logic of selecting reporter that are not reporting to anyone
+	@Query("SELECT e.employeeId FROM Employee e WHERE e.employeeId NOT IN " +
+		       "(SELECT emp.employeeId FROM Employee emp " +
+		       "INNER JOIN Employee reporter ON reporter.reportTo.employeeId = emp.employeeId)")
+		List<String> findEmployeesWithNoReporters();
+	
+	@Modifying
+	@Transactional
+	@Query("DELETE FROM Employee e WHERE e.employeeId IN :ids")
+	void deleteByIds(@Param("ids") List<String> ids);
+
+	// pageable doesn't work native query
 
 }

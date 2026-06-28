@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
-public record EmployeeAdditionRequest(@NotNull String name,@Max(100) @Min(18) int age, @Nullable String position, @Min(0) double salary, LocalDateTime joinDate, @Nullable UUID reportTo) {
+public record EmployeeAdditionRequest(@NotNull String name,@Max(100) @Min(18) @Max(300) int age, @Nullable String position, @Min(0) double salary, LocalDateTime joinDate, @Nullable UUID reportTo) {
 	
 	
 }

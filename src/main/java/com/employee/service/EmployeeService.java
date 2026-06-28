@@ -23,5 +23,5 @@ public interface EmployeeService {
 	
 	void deleteEmployee(UUID publicId) throws EmployeeNotFoundException;
 	void deleteEmployees(List<String> publicIds);
-	void searchDelete(List<String> publicIds,int page,int size);
+	void searchDelete(List<String> publicIds);
 }
