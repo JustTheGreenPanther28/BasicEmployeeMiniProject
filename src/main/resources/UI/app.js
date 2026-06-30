@@ -188,7 +188,7 @@ async function submit(id = null) {
     else {
         joinDate = joinDate + "T00:00:00Z";
     }
-    if (!isNaN(employeeName) || employeeName == "" || employeeName.length === 0 || employee.length > 100) {
+    if (!isNaN(employeeName) || employeeName == "" || employeeName.length === 0 || employeeName.length > 100) {
         showAlert("Please enter a valid name!", success = false, position = "form");
         return;
     }

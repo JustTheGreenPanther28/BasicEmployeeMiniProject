@@ -22,6 +22,6 @@ public interface EmployeeService {
 	Page<EmployeeResponse> searchEmployees(String query, int page, int size);
 	
 	void deleteEmployee(UUID publicId) throws EmployeeNotFoundException;
-	void deleteEmployees(List<String> publicIds);
-	void searchDelete(List<String> publicIds);
+	int deleteEmployees(List<String> publicIds);
+	int searchDelete(List<String> publicIds);
 }

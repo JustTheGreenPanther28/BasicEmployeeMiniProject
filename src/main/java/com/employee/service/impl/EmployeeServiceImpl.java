@@ -38,10 +38,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 			EmployeeResponse employeeResponse = new EmployeeResponse(employeeEntity);
 			return employeeResponse;
 		});
-
-		if (response == null) {
-			throw new RuntimeException("Empty!");
-		}
+		
 		return response;
 	}
 
@@ -128,9 +125,10 @@ public class EmployeeServiceImpl implements EmployeeService {
 
 	@Override
 	@Transactional
-	public void deleteEmployees(List<String> publicIds) {
+	public int deleteEmployees(List<String> publicIds) {
 
 		employeeRepo.deleteAllByIdInBatch(publicIds);
+		return publicIds.size();
 	}
 
 	@Override
@@ -140,25 +138,23 @@ public class EmployeeServiceImpl implements EmployeeService {
 		Employee employee = employeeRepo.findById(id.toString())
 				.orElseThrow(() -> new EmployeeNotFoundException("Employee with id doesn't exist"));
 
-		if (employee != null) {
-			employeeRepo.delete(employee);
-		}
+		employeeRepo.delete(employee);
 
 	}
 
 	@Override
 	@Transactional
-	public void searchDelete(List<String> publicIds) {
+	public int searchDelete(List<String> publicIds) {
 
-		List<String> deletableIds = employeeRepo.findEmployeesWithNoReporters();
+		List<String> deletableIds = employeeRepo.findEmployeesWithNoReporters(); // sabh
 
 		List<String> toDelete = publicIds.stream().filter(deletableIds::contains).toList();
 
 		if (!toDelete.isEmpty()) {
 			employeeRepo.deleteByIds(toDelete);
-		}
-		else {
+		} else {
 			throw new EmployeeNotFoundException("None of employee are deletable");
 		}
+		return toDelete.size();
 	}
 }

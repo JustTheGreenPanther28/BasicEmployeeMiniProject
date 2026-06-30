@@ -25,7 +25,7 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.CONFLICT).body(errMsg);
 	}
 
-	@ExceptionHandler({MethodArgumentNotValidException.class,HandlerMethodValidationException.class})
+	@ExceptionHandler({InvalidDemandException.class,MethodArgumentNotValidException.class,HandlerMethodValidationException.class})
 	public ResponseEntity<?> handleValidationException(MethodArgumentNotValidException e) {
 		ErrorMessage errMsg = new ErrorMessage(LocalDateTime.now(), "Invalid value", 400);
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errMsg);

@@ -1,9 +1,10 @@
 package com.employee.controller;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
-import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.employee.exception.InvalidDemandException;
 import com.employee.request.EmployeeAdditionRequest;
 import com.employee.response.EmployeeResponse;
 import com.employee.service.EmployeeService;
@@ -31,7 +33,7 @@ import jakarta.validation.constraints.NotNull;
 @RestController
 @RequestMapping("api/v1/employee")
 @CrossOrigin(origins = "*", methods = { RequestMethod.GET, RequestMethod.POST, RequestMethod.DELETE,
-		RequestMethod.PATCH, RequestMethod.OPTIONS  })
+		RequestMethod.PATCH, RequestMethod.OPTIONS })
 @Tag(name = "Employee Management", description = "APIs for managing employees — add, update, delete, search, and reporting hierarchy")
 public class EmployeeController {
 
@@ -44,42 +46,7 @@ public class EmployeeController {
 	@Operation(summary = "Add a new employee")
 	@PostMapping
 	public ResponseEntity<?> addEmployees(@Valid @RequestBody EmployeeAdditionRequest employeeAdditionRequest) {
-		return ResponseEntity.status(HttpStatusCode.valueOf(201))
-				.body(employeeService.addEmployee(employeeAdditionRequest));
-	}
-
-	@Operation(summary = "Get all employees with pagination and sorting")
-	@GetMapping
-	public ResponseEntity<Page<EmployeeResponse>> getEmployees(@RequestParam @Min(0) int page,
-			@RequestParam @Min(0) int size, @RequestParam(defaultValue = "employeeName") String sortBy,
-			@RequestParam(defaultValue = "asc") String order) {
-		return ResponseEntity.ok(employeeService.getEmployees(page, size, sortBy, order));
-	}
-
-	@Operation(summary = "Get reporting hierarchy of an employee by ID")
-	@GetMapping("/report")
-	public ResponseEntity<?> getReports() {
-		return ResponseEntity.ok(employeeService.getReports());
-	}
-
-	@Operation(summary = "Delete an employee by ID")
-	@DeleteMapping("/{id}")
-	public ResponseEntity<?> deleteEmployee(@PathVariable @NotNull String id) {
-		employeeService.deleteEmployee(UUID.fromString(id));
-		return ResponseEntity.status(HttpStatusCode.valueOf(204)).build();
-	}
-
-	@Operation(summary = "Delete multiple employees by list of IDs")
-	@DeleteMapping("/ids")
-	public ResponseEntity<?> deleteEmployees(@Valid @NotNull @RequestBody List<String> ids) {
-		employeeService.deleteEmployees(ids);
-		return ResponseEntity.status(HttpStatusCode.valueOf(204)).build();
-	}
-
-	@DeleteMapping("search-delete/ids")
-	public ResponseEntity<?> deleteDeletableIds(@Valid @NotNull @RequestBody List<String> ids) {
-		employeeService.searchDelete(ids);
-		return ResponseEntity.status(HttpStatusCode.valueOf(204)).build();
+		return ResponseEntity.status(HttpStatus.CREATED).body(employeeService.addEmployee(employeeAdditionRequest));
 	}
 
 	@Operation(summary = "Update employee details by ID")
@@ -89,11 +56,53 @@ public class EmployeeController {
 		return ResponseEntity.ok(employeeService.updateEmployee(id, employeeChangeRequest));
 	}
 
-	@Operation(summary = "Search employees by name or position")
-	@GetMapping("/search")
-	public ResponseEntity<Page<EmployeeResponse>> searchEmployees(@RequestParam String query,
-			@RequestParam @Min(0) int page, @RequestParam int size) {
-		return ResponseEntity.ok(employeeService.searchEmployees(query, page, size));
+	@Operation(summary = "Get all employees with pagination and sorting, Searching and get report")
+	@GetMapping
+	public ResponseEntity<?> getEmployees(@RequestParam(defaultValue = "0") @Min(0) int page,
+			@RequestParam(defaultValue = "5") @Min(0) int size,
+			@RequestParam(defaultValue = "employeeName") String sortBy,
+			@RequestParam(defaultValue = "asc") String order, @RequestParam(defaultValue = "") String searchQuery,
+			@RequestParam(defaultValue = "false") boolean report) {
+		if (!searchQuery.isBlank() && report) {
+			throw new InvalidDemandException("You can't invoke report and search at same time!");
+		}
+		if (report) {
+			return ResponseEntity.ok(employeeService.getReports());
+		}
+		if (!searchQuery.isBlank()) {
+			return ResponseEntity.ok(employeeService.searchEmployees(searchQuery, page, size));
+		}
+		return ResponseEntity.ok(employeeService.getEmployees(page, size, sortBy, order));
+	}
+
+	@Operation(summary = "Delete an employee by ID")
+	@DeleteMapping({ "", "/{id}" })
+	public ResponseEntity<?> deleteEmployee(@PathVariable(required = false) String id,
+			@RequestBody(required = false) List<String> ids,
+			@RequestParam(defaultValue = "false") boolean searchDelete) {
+
+		if (id == null && ids == null) {
+			throw new InvalidDemandException("Id(s) to delete is not provided");
+		}
+		if (id != null && ids != null) {
+			throw new InvalidDemandException("Please be specific with deletion");
+		}
+		if ((searchDelete && ids == null) || (searchDelete && id != null)) {
+			throw new InvalidDemandException("Search delete is applied on bulk deletion");
+		}
+		if (id != null) {
+			employeeService.deleteEmployee(UUID.fromString(id));
+			return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+		}
+		if (searchDelete) {
+			int numberOfDeletedIds = employeeService.searchDelete(ids);
+			return ResponseEntity.status(HttpStatus.NO_CONTENT)
+					.body(Map.of("deletionCount", numberOfDeletedIds, "skippedCount", ids.size() - numberOfDeletedIds));
+		}
+
+		int numberOfDeletedIds = employeeService.deleteEmployees(ids);
+		return ResponseEntity.status(HttpStatus.NO_CONTENT)
+				.body(Map.of("deletionCount", numberOfDeletedIds, "skippedCount", ids.size() - numberOfDeletedIds));
 	}
 
 }
